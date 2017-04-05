@@ -1,3 +1,4 @@
+
 # coding: utf-8 
 # オプションについて 前から順に、日本語記事のファイル（何個でも）、英語記事のファイル１個、辞書ファイル、出力ファイル
 
@@ -11,7 +12,7 @@ import mojimoji
 from pyknp import Juman
 import nltk
 import json
-
+import os.path
 
 juman = Juman()
 
@@ -61,13 +62,16 @@ def ja_categolize(line, dic):    #日本語のデータを、日付、ID、タ�
     else:
         return dic
 def make_ja_bag(sentence):    #日本語のbag of word生成
-    a = []
+    bag_of_words = {}
     result = juman.analysis(sentence)
     for mrph in result.mrph_list():
         if mrph.hinsi == u"形容詞" or mrph.hinsi == u"連体詞" or mrph.hinsi == u"副詞" or mrph.hinsi == u"感動詞" or mrph.hinsi == u"名詞" or mrph.hinsi == u"動詞" or mrph.hinsi == u"未定義語":
-            a.append(mrph.midasi.encode('utf-8'))
-    bag_of_word = tuple(a)
-    return bag_of_word
+            if bag_of_words.get(mrph.midasi) == None:
+                bag_of_words[mrph.midasi] = 1
+            else:
+                bag_of_words[mrph.midasi] = a[mrph.midasi]+1
+#            a.append(mrph.midasi.encode('utf-8'))
+    return bag_of_words
 def en_categolize(line, dic, i):#英語のデータを、日付、ID、タイトル、内容、タイトルのbag of word、内容のbag of wordに分類。
     if i % 3 == 0:
         year = int(line[0:4])
@@ -151,8 +155,8 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
             ex_ti_score = 0
             ex_co_score = 0
             ja_year = ja_line.get("year")
-	    ja_month = ja_line.get("month")
-	    ja_day = ja_line.get("day")
+            ja_month = ja_line.get("month")
+            ja_day = ja_line.get("day")
             ja_id = ja_line.get("id")
             ja_title = ja_line.get("title")
             ja_content = ja_line.get("content")
@@ -228,7 +232,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         pass
                     elif not a == None:
                         for word in a:
-                            if word.encode('utf-8') in ja_title:
+                            if word in ja_title:
                                 ti_score += 1
                                 break
                 if not len(en_koyu_title) == 0:
@@ -238,7 +242,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                             pass
                         elif not a == None:
                             for word in a:
-                                if word.encode('utf-8') in ja_title:
+                                if word in ja_title:
                                     ex_ti_score += 1
                                     break
                 if not len(en_num_title) == 0:
@@ -247,7 +251,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         if ja_title == None:
                             pass
                         elif not a == None:
-                            if a.encode('utf-8') in ja_title:
+                            if a in ja_title:
                                 ex_ti_score += 1
                                 break
 
@@ -258,7 +262,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         pass
                     elif not b == None:
                         for word in b:
-                            if word.encode('utf-8') in ja_content:
+                            if word in ja_content:
                                 co_score += 1
                                 break
                     elif b == None:
@@ -270,7 +274,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                             pass
                         elif not a == None:
                             for word in a:
-                                if word.encode('utf-8') in ja_content:
+                                if word in ja_content:
                                     ex_co_score += 1
                                     break
                         elif a == None:
@@ -281,7 +285,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         if ja_content == None:
                             pass
                         elif not a == None:
-                            if a.encode('utf-8') in ja_content:
+                            if a in ja_content:
                                 ex_co_score += 1
                                 break
                         elif a == None:
@@ -293,7 +297,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         pass
                     elif not a == None:
                         for word in a:
-                            if word.encode('utf-8') in ja_title:
+                            if word in ja_title:
                                 ti_score += 1
                                 break
                 if not len(en_koyu_title) == 0:
@@ -303,7 +307,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                             pass
                         elif not a == None:
                             for word in a:
-                                if word.encode('utf-8') in ja_title:
+                                if word in ja_title:
                                     ex_ti_score += 1
                                     break
                 if not len(en_num_title) == 0:
@@ -312,7 +316,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         if ja_title == None:
                             pass
                         elif not a == None:
-                            if word.encode('utf-8') in ja_title:
+                            if word in ja_title:
                                 ex_ti_score += 1
                                 break
 
@@ -323,7 +327,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         pass
                     elif not b == None:
                         for word in b:
-                            if word.encode('utf-8') in ja_content:
+                            if word in ja_content:
                                 co_score += 1
                                 break
                     elif b == None:
@@ -335,7 +339,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                             pass
                         elif not a == None:
                             for word in a:
-                                if word.encode('utf-8') in ja_content:
+                                if word in ja_content:
                                     ex_co_score += 1
                                     break
                         elif a == None:
@@ -346,7 +350,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         if ja_content == None:
                             pass
                         elif not a == None:
-                            if a.encode('utf-8') in ja_content:
+                            if a in ja_content:
                                 ex_co_score += 1
                                 break
                         elif a == None:
@@ -380,19 +384,19 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                 a = []
                 a.append(co_score)
                 a.append(ja_line["raw_title"])
-		a.append(ja_line["raw_content"])
+                a.append(ja_line["raw_content"])
                 a.append(ja_id)
                 best_sent.append(a)
                 best_sent.sort(key=lambda x:x[0])
             elif len(best_sent) == 20 and best_sent[0][0] < co_score:
                 a = []
-		a.append(co_score)
-		a.append(ja_line["raw_title"])
+                a.append(co_score)
+                a.append(ja_line["raw_title"])
                 a.append(ja_line["raw_content"])
                 a.append(ja_id)
                 del best_sent[0]
                 best_sent.append(a)
-		best_sent.sort(key=lambda x:x[0])
+                best_sent.sort(key=lambda x:x[0])
         if len(best_sent) > 0 or ex_best_sent > 0:
             g.write("#")
             g.write(en_id)
@@ -430,38 +434,57 @@ def prepro_ja():
     list_ja_article = []
     article = {}
     for i in range(argc-4):
-        f = codecs.open(argvs[i+1], 'r', 'utf8', 'ignore')
+        if not os.path.exists(argvs[i+1][:-4]+".json"):
+            f = codecs.open(argvs[i+1], 'r', 'utf8', 'ignore')
+            g = open(argvs[i+1][:-4]+".json", "w")
+            text = f.readlines()
+            j = 0
+            for line in text:
+                if u"＼Ｃ０＼" in line:
+                    if not article == {}:
+                        list_ja_article.append(article)
+                    j += 1
+                    if j == 7:
+                        break
+                    article = {}
+                article = ja_categolize(line, article)
+            list_ja_article.append(article)
+            article = {}
+            json.dump(list_ja_article, g)
+            f.close()
+            g.close()
+                        
+def prepro_en():
+    if not os.path.exists(argvs[argc-3][:-4]+".json"):
+        f = codecs.open(argvs[argc-3], 'r', 'utf8', 'ignore')
+        g = open(argvs[argc-3][:-4]+".json", "w")
         text = f.readlines()
-        j = 0
-        for line in text:
-            if u"＼Ｃ０＼" in line:
-                if not article == {}:
-                    list_ja_article.append(article)
-                j += 1
-                    #            if j == 7:
-                    #               break
+        e = 0
+        list_en_article = []
+        article = {}
+        
+        for i in range(len(text)):
+            e += 1
+            if i % 3 == 0:
+                list_en_article.append(article)
                 article = {}
-            article = ja_categolize(line, article)
-        list_ja_article.append(article)
-        article = {}
-        f.close()
-    
-f = codecs.open(argvs[argc-3], 'r', 'utf8', 'ignore')
-text = f.readlines()
-e = 0
-list_en_article = []
-article = {}
-
-for i in range(len(text)):
-    e += 1
-    if i % 3 == 0:
+            article = en_categolize(text[i], article, i)
         list_en_article.append(article)
-        article = {}
-    article = en_categolize(text[i], article, i)
-list_en_article.append(article)
-del list_en_article[0]
-f.close()
-word_dict = make_dict()
-search_best_sent(list_ja_article, list_en_article, word_dict)
+        del list_en_article[0]
+        json.dump(list_en_article, g)
+        f.close()
+def main():    
+    prepro_ja()
+    prepro_en()
+    word_dict = make_dict()
+    list_ja_article = []
+    for i in range(argc-4):
+        f = open(argvs[i+1][:-4]+".json")
+        list_ja_article.extend(json.load(f))
+        f.close()
+    f = open(argvs[argc-3][:-4]+".json")
+    list_en_article = json.load(f)
+    search_best_sent(list_ja_article, list_en_article, word_dict)
 
+main()
 
