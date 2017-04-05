@@ -10,7 +10,6 @@ import sys
 import mojimoji
 from pyknp import Juman
 import nltk
-import json
 
 
 juman = Juman()
@@ -205,7 +204,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         elif not a == None:
                             for word in a:
                                 if word.encode('utf-8') in ja_content:
-                                    ex_co_score += 1
+                                    co_score += 1
                                     break
                         elif a == None:
                             y += 1
@@ -216,7 +215,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                             pass
                         elif not a == None:
                             if a.encode('utf-8') in ja_content:
-                                ex_ti_score += 1
+                                ti_score += 1
                                 break
                         elif a == None:
                             y += 1
@@ -271,7 +270,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         elif not a == None:
                             for word in a:
                                 if word.encode('utf-8') in ja_content:
-                                    ex_co_score += 1
+                                    co_score += 1
                                     break
                         elif a == None:
                             y += 1
@@ -282,7 +281,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                             pass
                         elif not a == None:
                             if a.encode('utf-8') in ja_content:
-                                ex_co_score += 1
+                                co_score += 1
                                 break
                         elif a == None:
                             y += 1
@@ -336,7 +335,7 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                         elif not a == None:
                             for word in a:
                                 if word.encode('utf-8') in ja_content:
-                                    ex_co_score += 1
+                                    co_score += 1
                                     break
                         elif a == None:
                             y += 1
@@ -347,36 +346,14 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                             pass
                         elif not a == None:
                             if a.encode('utf-8') in ja_content:
-                                ex_co_score += 1
+                                co_score += 1
                                 break
                         elif a == None:
                             y += 1
             else:
                 break
             co_score = (float(co_score)/(k-z))*100#スコア＝（対応した単語の数）/（（記事内の単語の数）ー（辞書に存在しなかった未知語））
-            if not len(en_num_content)+len(en_koyu_content)-y == 0:
-                ex_co_score = (float(ex_co_score)/(len(en_num_content)+len(en_koyu_content)-y))*100#名詞、数詞に関するスコア＝（（対応した数詞、固有名詞の数）/（（記事内の数詞、固有名詞の数）ー（辞書に存在しなかった未知語）） 
-            else:
-                ex_co_score = 0
-            if len(ex_best_sent) < 20:#名詞、数詞に関するスコアのtop20を決定、そこに入らなかったものの中からスコアでtop20を決定し表示
-                a = []
-                a.append(ex_co_score)
-                a.append(ja_line["raw_title"])
-                a.append(ja_line["raw_content"])
-                a.append(ja_id)
-                ex_best_sent.append(a)
-                ex_best_sent.sort(key=lambda x:x[0])
-            elif len(ex_best_sent) == 20 and ex_best_sent[0][0] < ex_co_score:
-                a = []
-                a.append(ex_co_score)
-                a.append(ja_line["raw_title"])
-                a.append(ja_line["raw_content"])
-                a.append(ja_id)
-                del ex_best_sent[0]
-                ex_best_sent.append(a)
-                ex_best_sent.sort(key=lambda x:x[0])
-
-            elif len(best_sent) < 20:
+            if len(best_sent) < 40:
                 a = []
                 a.append(co_score)
                 a.append(ja_line["raw_title"])
@@ -384,15 +361,16 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                 a.append(ja_id)
                 best_sent.append(a)
                 best_sent.sort(key=lambda x:x[0])
-            elif len(best_sent) == 20 and best_sent[0][0] < co_score:
-                a = []
-		a.append(co_score)
-		a.append(ja_line["raw_title"])
-                a.append(ja_line["raw_content"])
-                a.append(ja_id)
-                del best_sent[0]
-                best_sent.append(a)
-		best_sent.sort(key=lambda x:x[0])
+            elif len(best_sent) == 40:
+                if best_sent[0][0] < co_score:
+                    a = []
+		    a.append(co_score)
+		    a.append(ja_line["raw_title"])
+                    a.append(ja_line["raw_content"])
+                    a.append(ja_id)
+                    del best_sent[0]
+                    best_sent.append(a)
+		    best_sent.sort(key=lambda x:x[0])
         if len(best_sent) > 0 or ex_best_sent > 0:
             g.write("#")
             g.write(en_id)
@@ -402,18 +380,6 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
             g.write(en_raw_content)
             g.write("\n")
             g.write("\n")
-            for pair in reversed(ex_best_sent):
-                g.write("#")
-                g.write(pair[3])
-                g.write("ex_score:"+str(pair[0]))
-                g.write("\n")
-                g.write("\n")
-                g.write(pair[1])
-                g.write("\n")
-                g.write("\n")
-                g.write(pair[2])
-                g.write("\n")
-                g.write("\n")
             for pair in reversed(best_sent):
                 g.write("#")
                 g.write(pair[3])
@@ -426,26 +392,25 @@ def search_best_sent(ja_art, en_art, word_dict):#記事の探索
                 g.write(pair[2])
                 g.write("\n")
                 g.write("\n")
-def prepro_ja():
-    list_ja_article = []
+
+list_ja_article = []
+article = {}
+for i in range(argc-4):
+    f = codecs.open(argvs[i+1], 'r', 'utf8', 'ignore')
+    text = f.readlines()
+    j = 0
+    for line in text:
+        if u"＼Ｃ０＼" in line:
+            if not article == {}:
+                list_ja_article.append(article)
+            j += 1
+#            if j == 7:
+ #               break
+            article = {}
+        article = ja_categolize(line, article)
+    list_ja_article.append(article)
     article = {}
-    for i in range(argc-4):
-        f = codecs.open(argvs[i+1], 'r', 'utf8', 'ignore')
-        text = f.readlines()
-        j = 0
-        for line in text:
-            if u"＼Ｃ０＼" in line:
-                if not article == {}:
-                    list_ja_article.append(article)
-                j += 1
-                    #            if j == 7:
-                    #               break
-                article = {}
-            article = ja_categolize(line, article)
-        list_ja_article.append(article)
-        article = {}
-        f.close()
-    
+    f.close()
 f = codecs.open(argvs[argc-3], 'r', 'utf8', 'ignore')
 text = f.readlines()
 e = 0
